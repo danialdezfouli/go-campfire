@@ -1,4 +1,4 @@
-package postgresql
+package repository
 
 import (
 	"campfire/internal/database"
@@ -16,8 +16,8 @@ func NewUserRepositoryPostgres() UserRepositoryPostgres {
 
 func (r UserRepositoryPostgres) CreateUser(ctx context.Context, user *domain.User) error {
 	db := database.GetPostgres()
-	sql := `INSERT INTO users (name, email, password, organization_id, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id`
-	err := db.QueryRow(sql, user.Name, user.Email, user.Password, user.OrganizationId).Scan(&user.Id)
+	sql := `INSERT INTO users (name, email, password, organization_id, is_super_admin, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id`
+	err := db.QueryRow(sql, user.Name, user.Email, user.Password, user.OrganizationId, user.IsSuperAdmin).Scan(&user.Id)
 	if err != nil {
 		return err
 	}

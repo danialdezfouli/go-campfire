@@ -12,4 +12,5 @@ type Organization struct {
 
 type OrganizationRepository interface {
 	CreateOrganization(ctx context.Context, i *Organization) error
+	GetOrganization(ctx context.Context, organizationId int) (*Organization, error)
 }

@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"campfire/internal/repository/postgresql"
+	"campfire/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AuthRoutes(route *gin.Engine) {
-	userRepositoryDb := postgresql.NewUserRepositoryPostgres()
+	userRepositoryDb := repository.NewUserRepositoryPostgres()
 	c := AuthHandler{AuthService: NewAuthService(userRepositoryDb)}
 
 	route.POST("/login", c.Login)
