@@ -5,7 +5,6 @@ import (
 	"campfire/internal/repository"
 	"campfire/pkg/utils"
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -16,11 +15,7 @@ type OrganizationService struct {
 	OrganizationRepository repository.OrganizationRepositoryPostgres
 }
 
-func NewOrganizationService() *OrganizationService {
-	return &OrganizationService{}
-}
-
-func (s OrganizationService) CreateOrganization(ctx context.Context, input CreateOrganizationRequest) (*domain.Organization, *domain.User, error) {
+func (s OrganizationService) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*domain.Organization, *domain.User, error) {
 	validate := validator.New()
 	if err := validate.Struct(input); err != nil {
 		return nil, nil, err
@@ -51,7 +46,11 @@ func (s OrganizationService) CreateOrganization(ctx context.Context, input Creat
 	return org, user, nil
 }
 
-func (s OrganizationService) AddMember(ctx context.Context, input AddMemberRequest) (*domain.User, error) {
+func (s OrganizationService) DeleteOrganization(ctx context.Context, id int) error {
+	return s.OrganizationRepository.DeleteOrganization(ctx, id)
+}
+
+func (s OrganizationService) AddMember(ctx context.Context, input AddMemberInput) (*domain.User, error) {
 	validate := validator.New()
 	if err := validate.Struct(input); err != nil {
 		return nil, err
@@ -64,7 +63,7 @@ func (s OrganizationService) AddMember(ctx context.Context, input AddMemberReque
 	}
 
 	if org == nil {
-		return nil, errors.New(fmt.Sprintf("organization %d is not found", input.OrganizationId))
+		return nil, fmt.Errorf("organization %d is not found", input.OrganizationId)
 	}
 
 	password, _ := utils.HashPassword(input.Password)

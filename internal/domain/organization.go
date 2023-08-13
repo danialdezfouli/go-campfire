@@ -5,9 +5,9 @@ import "context"
 const OrganizationTableName = "organizations"
 
 type Organization struct {
-	Id        interface{} `bson:"id,omitempty"`
-	Name      string      `bson:"name,omitempty"`
-	Subdomain string      `bson:"subdomain,omitempty"`
+	Id        int    `bson:"id,omitempty"`
+	Name      string `bson:"name,omitempty"`
+	Subdomain string `bson:"subdomain,omitempty"`
 }
 
 type OrganizationRepository interface {

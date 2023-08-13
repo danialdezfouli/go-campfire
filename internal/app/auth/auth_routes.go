@@ -6,11 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(route *gin.Engine) {
+func AuthRoutes(router *gin.Engine) {
 	userRepositoryDb := repository.NewUserRepositoryPostgres()
 	c := AuthHandler{AuthService: NewAuthService(userRepositoryDb)}
 
-	route.POST("/login", c.Login)
-	route.POST("/register", c.Register)
-	route.DELETE("/logout", c.Logout)
+	router.POST("/api/v1/login", c.Login)
 }

@@ -2,8 +2,15 @@ package auth
 
 import (
 	"campfire/internal/domain"
+	"campfire/pkg/token"
+	"campfire/pkg/utils"
 	"context"
+	"errors"
 	"log"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthService struct {
@@ -14,29 +21,57 @@ func NewAuthService(userRepository domain.UserRepository) AuthService {
 	return AuthService{userRepository}
 }
 
-func (s AuthService) Login(ctx context.Context) (string, error) {
-	user, err := s.UserRepository.GetUser(ctx, 1)
-	if err != nil {
-		log.Printf("Error getting user: %v", err)
-		return "", err
+func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.User, error) {
+	validate := validator.New()
+	if err := validate.Struct(input); err != nil {
+		return nil, err
 	}
-	return user.Name, nil
+
+	user, err := s.UserRepository.GetUserByEmail(ctx, input.Email, input.Subdomain)
+	if err != nil {
+		log.Printf("Error getting user: %s", err)
+		return nil, errors.New("username or password is wrong")
+	}
+
+	if utils.CheckPasswordHash(input.Password, user.Password) {
+		return nil, errors.New("username or password is wrong")
+	}
+
+	return user, nil
 }
 
-func (s AuthService) Register(ctx context.Context) (string, error) {
-	user, err := s.UserRepository.GetUser(ctx, 1)
+var signingKey = []byte("123")
+
+func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User) (string, error) {
+	claims := &token.Claims{
+		UserID:         user.Id,
+		OrganizationId: user.OrganizationId,
+		Email:          user.Email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	}
+
+	t, err := token.Generate(claims, signingKey)
+
 	if err != nil {
-		log.Printf("Error getting user: %v", err)
 		return "", err
 	}
-	return user.Name, nil
+
+	return t, nil
 }
 
-func (s AuthService) Logout(ctx context.Context) (string, error) {
-	user, err := s.UserRepository.GetUser(ctx, 1)
+func (s AuthService) VerifyToken(ctx context.Context, tokenStr string) (bool, error) {
+	valid, err := token.Validate(tokenStr, signingKey)
+
 	if err != nil {
-		log.Printf("Error getting user: %v", err)
-		return "", err
+		return false, err
 	}
-	return user.Name, nil
+
+	if !valid {
+		return false, errors.New("token is not valid")
+	}
+
+	return true, nil
 }

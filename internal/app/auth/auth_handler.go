@@ -11,34 +11,24 @@ type AuthHandler struct {
 }
 
 func (h AuthHandler) Login(c *gin.Context) {
-	data, err := h.AuthService.Login(c)
+	input := LoginInput{}
+	c.Bind(&input)
+	user, err := h.AuthService.Attempt(c, input)
+
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   http.StatusUnauthorized,
+			"message": "Unauthorized",
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": data,
+		"data": gin.H{
+			"id":    user.Id,
+			"name":  user.Name,
+			"email": user.Email,
+		},
 	})
-}
 
-func (h AuthHandler) Register(c *gin.Context) {
-	data, err := h.AuthService.Register(c)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": data,
-	})
-}
-
-func (h AuthHandler) Logout(c *gin.Context) {
-	data, err := h.AuthService.Logout(c)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": data,
-	})
 }

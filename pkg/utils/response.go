@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func Response(w http.ResponseWriter, code int, data interface{}) {
+func Response(w http.ResponseWriter, code int, data any) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 

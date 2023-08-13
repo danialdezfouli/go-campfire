@@ -4,7 +4,7 @@ import (
 	"campfire/internal/database"
 	"campfire/internal/domain"
 	"context"
-	"fmt"
+	"log"
 )
 
 type UserRepositoryPostgres struct {
@@ -25,15 +25,33 @@ func (r UserRepositoryPostgres) CreateUser(ctx context.Context, user *domain.Use
 	return nil
 }
 
-func (r UserRepositoryPostgres) GetUser(ctx context.Context, userId int) (*domain.User, error) {
+func (r UserRepositoryPostgres) GetUserById(ctx context.Context, userId int) (*domain.User, error) {
 	db := database.GetPostgres()
-	sql := `SELECT name, email FROM users WHERE id=$1`
+	sql := `SELECT id, name, email, is_super_admin, created_at, updated_at FROM users WHERE id=$1`
 	var user domain.User
-	err := db.QueryRow(sql, userId).Scan(&user.Name, &user.Email)
+	err := db.QueryRow(sql, userId).Scan(&user.Id, &user.Name, &user.Email, &user.IsSuperAdmin, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
+		log.Println("failed to find user by id")
 		return nil, err
 	}
 
-	user.Id = fmt.Sprintf("%d", userId)
+	return &user, nil
+}
+
+func (r UserRepositoryPostgres) GetUserByEmail(ctx context.Context, email string, subdomain string) (*domain.User, error) {
+	db := database.GetPostgres()
+	sql := `SELECT users.id, users.name, email, password FROM users
+	inner join organizations on users.organization_id = organizations.id
+	WHERE email=$1 and organizations.subdomain=$2`
+
+	var user domain.User
+	err := db.QueryRow(sql, email, subdomain).
+		Scan(&user.Id, &user.Name, &user.Email, &user.Password)
+
+	if err != nil {
+		log.Println("failed to find user by email")
+		return nil, err
+	}
+
 	return &user, nil
 }

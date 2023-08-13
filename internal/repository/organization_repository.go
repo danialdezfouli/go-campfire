@@ -4,6 +4,7 @@ import (
 	"campfire/internal/database"
 	"campfire/internal/domain"
 	"context"
+	"log"
 )
 
 type OrganizationRepositoryPostgres struct {
@@ -45,6 +46,17 @@ func (o OrganizationRepositoryPostgres) CreateOrganization(ctx context.Context, 
 	sql := `INSERT INTO organizations (name, subdomain, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) RETURNING id`
 	err := db.QueryRow(sql, input.Name, input.Subdomain).Scan(&input.Id)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o OrganizationRepositoryPostgres) DeleteOrganization(ctx context.Context, id int) error {
+	db := database.GetPostgres()
+	_, err := db.Exec(`DELETE from organizations where id=$1`, id)
+	if err != nil {
+		log.Println("error in deleting")
 		return err
 	}
 

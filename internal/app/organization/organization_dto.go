@@ -1,6 +1,6 @@
 package organization
 
-type CreateOrganizationRequest struct {
+type CreateOrganizationInput struct {
 	UserName         string `validate:"required"`
 	OrganizationName string `validate:"required"`
 	Subdomain        string `validate:"required"`
@@ -11,7 +11,7 @@ type CreateOrganizationRequest struct {
 type CreateOrganizationResponse struct {
 }
 
-type AddMemberRequest struct {
+type AddMemberInput struct {
 	OrganizationId int    `validate:"required"`
 	UserName       string `validate:"required"`
 	Email          string `validate:"required"`

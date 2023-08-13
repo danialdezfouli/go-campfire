@@ -7,8 +7,6 @@ import (
 	"campfire/pkg/utils"
 	"context"
 	"testing"
-
-	"github.com/go-faker/faker/v4"
 )
 
 func TestMain(m *testing.M) {
@@ -23,14 +21,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func generateRandomSubdomain() string {
-	var sample struct {
-		Subdomain string `faker:"username"`
-	}
-	faker.FakeData(&sample)
-	return sample.Subdomain
-}
-
 func TestCreateOrganization(t *testing.T) {
 	orgnRepository := repository.NewOrganizationRepositoryPostgres()
 	userRepository := repository.NewUserRepositoryPostgres()
@@ -40,10 +30,10 @@ func TestCreateOrganization(t *testing.T) {
 	}
 
 	t.Run("Create organization successfully", func(t *testing.T) {
-		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationRequest{
+		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationInput{
 			UserName:         "Danial",
 			OrganizationName: "Example Organization",
-			Subdomain:        generateRandomSubdomain(),
+			Subdomain:        utils.GenerateRandomSubdomain(),
 			Email:            "danial@gmail.com",
 			Password:         "secret",
 		})
@@ -53,7 +43,7 @@ func TestCreateOrganization(t *testing.T) {
 	})
 
 	t.Run("Create organization with invalid data", func(t *testing.T) {
-		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationRequest{
+		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationInput{
 			OrganizationName: "",
 			UserName:         "",
 			Email:            "",
@@ -75,7 +65,7 @@ func TestAddMemberToOrganization(t *testing.T) {
 	}
 
 	t.Run("Add member to organization successfully", func(t *testing.T) {
-		_, err := s.AddMember(context.TODO(), organization.AddMemberRequest{
+		_, err := s.AddMember(context.TODO(), organization.AddMemberInput{
 			OrganizationId: 14,
 			UserName:       "Pashmak",
 			Email:          "pashmak@gmail.com",

@@ -11,7 +11,7 @@ type OrganizationHandler struct {
 }
 
 func (h OrganizationHandler) Create(c *gin.Context) {
-	org, user, err := h.OrganizationService.CreateOrganization(c, CreateOrganizationRequest{
+	org, user, err := h.OrganizationService.CreateOrganization(c, CreateOrganizationInput{
 		UserName:         "",
 		OrganizationName: "",
 		Email:            "",
