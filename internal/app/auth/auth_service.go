@@ -2,6 +2,7 @@ package auth
 
 import (
 	"campfire/internal/domain"
+	"campfire/pkg/exceptions"
 	"campfire/pkg/token"
 	"campfire/pkg/utils"
 	"context"
@@ -24,17 +25,19 @@ func NewAuthService(userRepository domain.UserRepository) AuthService {
 func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.User, error) {
 	validate := validator.New()
 	if err := validate.Struct(input); err != nil {
-		return nil, err
+		return nil, &exceptions.ValidationError{
+			Err: err,
+		}
 	}
 
 	user, err := s.UserRepository.GetUserByEmail(ctx, input.Email, input.Subdomain)
 	if err != nil {
 		log.Printf("Error getting user: %s", err)
-		return nil, errors.New("username or password is wrong")
+		return nil, &exceptions.InvalidLoginError{}
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
-		return nil, errors.New("username or password is wrong")
+		return nil, &exceptions.InvalidLoginError{}
 	}
 
 	return user, nil

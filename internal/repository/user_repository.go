@@ -49,7 +49,6 @@ func (r UserRepositoryPostgres) GetUserByEmail(ctx context.Context, email string
 		Scan(&user.Id, &user.Name, &user.Email, &user.Password)
 
 	if err != nil {
-		log.Println("failed to find user by email")
 		return nil, err
 	}
 

@@ -62,7 +62,7 @@ func TestUserLogin(t *testing.T) {
 		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
 			Subdomain: org.Subdomain,
 			Email:     createdUser.Email,
-			Password:  createdUser.Password,
+			Password:  "secret",
 		})
 
 		if err != nil {
@@ -72,13 +72,13 @@ func TestUserLogin(t *testing.T) {
 	})
 
 	t.Run("User does not login with invalid email", func(t *testing.T) {
-		org, createdUser := createOrganization(t)
+		org, _ := createOrganization(t)
 		defer deleteOrganization(org.Id)
 
 		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
 			Subdomain: org.Subdomain,
 			Email:     "different-email@gmail.com",
-			Password:  createdUser.Password,
+			Password:  "secret",
 		})
 
 		if err == nil {

@@ -1,7 +1,7 @@
 package auth
 
 type LoginInput struct {
-	Email     string `json:"email" binding:"required"`
-	Subdomain string `json:"subdomain" binding:"required"`
-	Password  string `json:"password" binding:"required"`
+	Email     string `json:"email" validate:"required"`
+	Subdomain string `json:"subdomain" validate:"required"`
+	Password  string `json:"password" validate:"required"`
 }
