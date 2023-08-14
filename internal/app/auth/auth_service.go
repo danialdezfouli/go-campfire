@@ -33,7 +33,7 @@ func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.Use
 		return nil, errors.New("username or password is wrong")
 	}
 
-	if utils.CheckPasswordHash(input.Password, user.Password) {
+	if !utils.CheckPasswordHash(input.Password, user.Password) {
 		return nil, errors.New("username or password is wrong")
 	}
 

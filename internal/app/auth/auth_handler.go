@@ -12,7 +12,12 @@ type AuthHandler struct {
 
 func (h AuthHandler) Login(c *gin.Context) {
 	input := LoginInput{}
-	c.Bind(&input)
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	user, err := h.AuthService.Attempt(c, input)
 
 	if err != nil {

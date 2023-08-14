@@ -60,8 +60,9 @@ func TestUserLogin(t *testing.T) {
 		defer deleteOrganization(org.Id)
 
 		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
-			Email:    createdUser.Email,
-			Password: createdUser.Password,
+			Subdomain: org.Subdomain,
+			Email:     createdUser.Email,
+			Password:  createdUser.Password,
 		})
 
 		if err != nil {
@@ -75,8 +76,9 @@ func TestUserLogin(t *testing.T) {
 		defer deleteOrganization(org.Id)
 
 		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
-			Email:    "different-email@gmail.com",
-			Password: createdUser.Password,
+			Subdomain: org.Subdomain,
+			Email:     "different-email@gmail.com",
+			Password:  createdUser.Password,
 		})
 
 		if err == nil {
