@@ -1,23 +1,37 @@
 package exceptions
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
 
-type AuthenticationError struct{}
-
-func (e *AuthenticationError) Error() string {
-	return "Unauthencated error"
+type RequestError struct {
+	Code int
+	Err  error
 }
 
-type InvalidLoginError struct{}
-
-func (e *InvalidLoginError) Error() string {
-	return "username or password is wrong"
+func (r *RequestError) Error() string {
+	return fmt.Sprintf("status %d: err %v", r.Code, r.Err)
 }
 
-type ValidationError struct {
-	Err error
+func AuthenticationError() *RequestError {
+	return &RequestError{
+		Code: http.StatusUnauthorized,
+		Err:  errors.New("unauthencated error"),
+	}
 }
 
-func (e *ValidationError) Error() string {
-	return fmt.Sprintf("Validation error: %s", e.Err.Error())
+func InvalidLoginError() *RequestError {
+	return &RequestError{
+		Code: http.StatusUnauthorized,
+		Err:  errors.New("username or password is wrong"),
+	}
+}
+
+func ValidationError(err error) *RequestError {
+	return &RequestError{
+		Code: http.StatusBadRequest,
+		Err:  err,
+	}
 }

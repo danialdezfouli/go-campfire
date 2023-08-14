@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"campfire/pkg/exceptions"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,21 +16,9 @@ func (h AuthHandler) Login(c *gin.Context) {
 	user, err := h.AuthService.Attempt(c, input)
 
 	if err != nil {
-		switch err.(type) {
-		case nil:
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": err.Error(),
-			})
-		case *exceptions.InvalidLoginError:
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": err.Error(),
-			})
-		case *exceptions.ValidationError:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-		}
-
+		c.JSON(err.Code, gin.H{
+			"message": err.Err.Error(),
+		})
 		return
 	}
 

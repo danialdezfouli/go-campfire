@@ -22,22 +22,21 @@ func NewAuthService(userRepository domain.UserRepository) AuthService {
 	return AuthService{userRepository}
 }
 
-func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.User, error) {
+func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.User, *exceptions.RequestError) {
 	validate := validator.New()
 	if err := validate.Struct(input); err != nil {
-		return nil, &exceptions.ValidationError{
-			Err: err,
-		}
+		return nil, exceptions.ValidationError(err)
 	}
 
 	user, err := s.UserRepository.GetUserByEmail(ctx, input.Email, input.Subdomain)
 	if err != nil {
 		log.Printf("Error getting user: %s", err)
-		return nil, &exceptions.InvalidLoginError{}
+		return nil, exceptions.InvalidLoginError()
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
-		return nil, &exceptions.InvalidLoginError{}
+		return nil, exceptions.InvalidLoginError()
+
 	}
 
 	return user, nil

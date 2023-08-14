@@ -4,3 +4,4 @@
 tmp
 .air.toml
 .env
+tests/__debug_bin
