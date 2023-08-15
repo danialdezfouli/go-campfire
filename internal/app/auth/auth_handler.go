@@ -16,9 +16,7 @@ func (h AuthHandler) Login(c *gin.Context) {
 	user, err := h.AuthService.Attempt(c, input)
 
 	if err != nil {
-		c.JSON(err.Code, gin.H{
-			"message": err.Err.Error(),
-		})
+		c.JSON(err.Code(), err)
 		return
 	}
 

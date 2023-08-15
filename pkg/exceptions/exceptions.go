@@ -1,37 +1,73 @@
 package exceptions
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
 )
 
+type CustomError interface {
+	Code() int
+	Error() string
+}
+
 type RequestError struct {
-	Code int
-	Err  error
+	code    int    `json:"-"`
+	Message string `json:"messages"`
 }
 
-func (r *RequestError) Error() string {
-	return fmt.Sprintf("status %d: err %v", r.Code, r.Err)
+func (e *RequestError) Error() string {
+	return fmt.Sprintf("status %d: err %v", e.code, e.Message)
 }
 
-func AuthenticationError() *RequestError {
+func (e *RequestError) Code() int {
+	return e.code
+}
+
+func Unauthenticated() *RequestError {
 	return &RequestError{
-		Code: http.StatusUnauthorized,
-		Err:  errors.New("unauthencated error"),
+		code:    http.StatusUnauthorized,
+		Message: "unauthencated error",
 	}
 }
 
-func InvalidLoginError() *RequestError {
+func InvalidLogin() *RequestError {
 	return &RequestError{
-		Code: http.StatusUnauthorized,
-		Err:  errors.New("username or password is wrong"),
+		code:    http.StatusUnauthorized,
+		Message: "username or password is wrong",
 	}
 }
 
-func ValidationError(err error) *RequestError {
-	return &RequestError{
-		Code: http.StatusBadRequest,
-		Err:  err,
+//
+//
+//
+
+type ValidationError struct {
+	code    int      `json:"-"`
+	Message string   `json:"messages"`
+	Errors  []string `json:"errors"`
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("status %d: err %v", e.code, e.Message)
+}
+
+func (e *ValidationError) Code() int {
+	return e.code
+}
+
+func NewValidationError(err error) *ValidationError {
+	validationErrors := err.(validator.ValidationErrors)
+	errors := []string{}
+
+	for _, validationError := range validationErrors {
+		errors = append(errors, validationError.Error())
+	}
+
+	return &ValidationError{
+		code:    http.StatusBadRequest,
+		Message: "inputs is invalid",
+		Errors:  errors,
 	}
 }
