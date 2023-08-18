@@ -11,6 +11,7 @@ type Organization struct {
 }
 
 type OrganizationRepository interface {
+	FindById(ctx context.Context, id int) (*Organization, error)
 	CreateOrganization(ctx context.Context, i *Organization) error
-	GetOrganization(ctx context.Context, organizationId int) (*Organization, error)
+	DeleteOrganization(ctx context.Context, id int) error
 }

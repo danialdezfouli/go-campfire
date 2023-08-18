@@ -1,12 +1,13 @@
 package tests
 
 import (
+	"context"
+	"testing"
+
 	"campfire/internal/app/organization"
 	"campfire/internal/database"
 	"campfire/internal/repository"
 	"campfire/pkg/utils"
-	"context"
-	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -15,7 +16,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-
 	defer database.ClosePostgresConnection()
 
 	m.Run()
@@ -30,28 +30,30 @@ func TestCreateOrganization(t *testing.T) {
 	}
 
 	t.Run("Create organization successfully", func(t *testing.T) {
-		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationInput{
+		input := organization.CreateOrganizationInput{
 			UserName:         "Danial",
 			OrganizationName: "Example Organization",
 			Subdomain:        utils.GenerateRandomSubdomain(),
 			Email:            "danial@gmail.com",
 			Password:         "secret",
-		})
+		}
+		_, _, err := s.CreateOrganization(context.TODO(), input)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("failed to create organization: %v", err)
 		}
 	})
 
 	t.Run("Create organization with invalid data", func(t *testing.T) {
-		_, _, err := s.CreateOrganization(context.TODO(), organization.CreateOrganizationInput{
+		invalidInput := organization.CreateOrganizationInput{
 			OrganizationName: "",
 			UserName:         "",
 			Email:            "",
 			Password:         "",
-		})
+		}
+		_, _, err := s.CreateOrganization(context.TODO(), invalidInput)
 
 		if err == nil {
-			t.Fatal("it should fail with invalid data.")
+			t.Fatal("expected an error with invalid data, but got none")
 		}
 	})
 }
@@ -65,16 +67,16 @@ func TestAddMemberToOrganization(t *testing.T) {
 	}
 
 	t.Run("Add member to organization successfully", func(t *testing.T) {
-		_, err := s.AddMember(context.TODO(), organization.AddMemberInput{
+		input := organization.AddMemberInput{
 			OrganizationId: 14,
 			UserName:       "Pashmak",
 			Email:          "pashmak@gmail.com",
 			Password:       "pashmak",
-		})
+		}
 
+		_, err := s.AddMember(context.TODO(), input)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("failed to add member to organization: %v", err)
 		}
 	})
-
 }
