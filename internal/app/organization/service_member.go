@@ -4,11 +4,12 @@ import (
 	"campfire/internal/domain"
 	"campfire/pkg/exceptions"
 	"campfire/pkg/utils"
+	"campfire/pkg/validations"
 	"context"
 )
 
 func (s OrganizationService) AddMember(ctx context.Context, input AddMemberInput) (*domain.User, error) {
-	if err := validateInput(input); err != nil {
+	if err := validations.ValidateInput(input); err != nil {
 		return nil, err
 	}
 

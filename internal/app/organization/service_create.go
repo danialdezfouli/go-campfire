@@ -3,11 +3,12 @@ package organization
 import (
 	"campfire/internal/domain"
 	"campfire/pkg/utils"
+	"campfire/pkg/validations"
 	"context"
 )
 
 func (s OrganizationService) CreateOrganization(ctx context.Context, input CreateOrganizationInput) (*domain.Organization, *domain.User, error) {
-	if err := validateInput(input); err != nil {
+	if err := validations.ValidateInput(input); err != nil {
 		return nil, nil, err
 	}
 
@@ -16,7 +17,7 @@ func (s OrganizationService) CreateOrganization(ctx context.Context, input Creat
 		return nil, nil, err
 	}
 
-	user, err := s.createFirstUserForOrganization(ctx, org.Id, input)
+	user, err := s.createFirstUserAtOrganization(ctx, org.Id, input)
 	if err != nil {
 		return org, nil, err
 	}
@@ -37,7 +38,7 @@ func (s OrganizationService) createOrganization(ctx context.Context, input Creat
 	return org, nil
 }
 
-func (s OrganizationService) createFirstUserForOrganization(ctx context.Context, orgID int, input CreateOrganizationInput) (*domain.User, error) {
+func (s OrganizationService) createFirstUserAtOrganization(ctx context.Context, orgID int, input CreateOrganizationInput) (*domain.User, error) {
 	password, _ := utils.HashPassword(input.Password)
 	user := &domain.User{
 		OrganizationId: orgID,
