@@ -26,9 +26,10 @@ func (r UserRepositoryPostgres) CreateUser(ctx context.Context, user *domain.Use
 
 func (r UserRepositoryPostgres) GetUserById(ctx context.Context, userId domain.UserId) (*domain.User, error) {
 	db := database.GetPostgres()
-	sql := `SELECT id, name, email, is_super_admin, created_at, updated_at FROM users WHERE id=$1`
+	sql := `SELECT id, name, email, organization_id, is_super_admin, created_at, updated_at FROM users WHERE id=$1`
 	var user domain.User
-	err := db.QueryRow(sql, userId).Scan(&user.Id, &user.Name, &user.Email, &user.IsSuperAdmin, &user.CreatedAt, &user.UpdatedAt)
+	err := db.QueryRow(sql, userId).
+		Scan(&user.Id, &user.Name, &user.Email, &user.OrganizationId, &user.IsSuperAdmin, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

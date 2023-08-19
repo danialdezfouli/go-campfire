@@ -3,7 +3,6 @@ package auth
 import (
 	"campfire/internal/app/user"
 	"campfire/pkg/config"
-	"campfire/pkg/token"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -43,20 +42,15 @@ func (h AuthHandler) Login(c *gin.Context) {
 }
 
 func (h AuthHandler) Me(c *gin.Context) {
-	accessToken := c.GetHeader("Authorization")
-	claims, err := token.Parse(accessToken, config.GetAccessTokenSecret())
+	claims, err := h.AuthService.ParseToken(c)
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.AbortWithStatusJSON(err.GetCode(), err)
 		return
 	}
 
 	user, err := h.UserService.FindById(c, claims.User)
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.AbortWithStatusJSON(err.GetCode(), err)
 		return
 	}
 

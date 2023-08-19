@@ -1,11 +1,12 @@
 package exceptions
 
 import (
+	"campfire/internal/domain"
 	"fmt"
 	"net/http"
 )
 
-func NewOrganizationNotFound(id int) *RequestError {
+func NewOrganizationNotFound(id domain.OrganizationId) *RequestError {
 	return &RequestError{
 		Code:    http.StatusNotFound,
 		Message: fmt.Sprintf("organization %d is not found", id),

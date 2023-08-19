@@ -38,7 +38,7 @@ func Validate(tokenString string, secretKey []byte) (*Claims, error) {
 		return secretKey, nil
 	})
 
-	if !token.Valid {
+	if token != nil && !token.Valid {
 		return nil, errors.New("token is expired")
 	}
 
@@ -46,8 +46,8 @@ func Validate(tokenString string, secretKey []byte) (*Claims, error) {
 		return nil, err
 	}
 
-	claims, OK := token.Claims.(*Claims)
-	if !OK {
+	claims, ok := token.Claims.(*Claims)
+	if !ok {
 		return nil, errors.New("unable to parse claims")
 	}
 

@@ -2,14 +2,17 @@ package auth
 
 import (
 	"campfire/internal/domain"
+	"campfire/pkg/config"
 	"campfire/pkg/exceptions"
 	"campfire/pkg/token"
 	"campfire/pkg/utils"
 	"campfire/pkg/validations"
 	"context"
 	"log"
+	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -56,7 +59,8 @@ func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User, s
 	str, err := token.Generate(claims, signingKey)
 
 	if err != nil {
-		return "", exceptions.NewInternalServerError("failed to create token", err)
+		log.Printf("failed to generate token: %v", err)
+		return "", exceptions.InternalServerError
 	}
 
 	return str, nil
@@ -70,4 +74,17 @@ func (s AuthService) VerifyToken(ctx context.Context, tokenString string, signin
 	}
 
 	return true, nil
+}
+
+func (s AuthService) ParseToken(ctx *gin.Context) (*token.Claims, exceptions.CustomError) {
+	accessToken := ctx.GetHeader("Authorization")
+	claims, err := token.Parse(accessToken, config.GetAccessTokenSecret())
+	if err != nil {
+		return nil, &exceptions.RequestError{
+			Code:    http.StatusUnauthorized,
+			Message: err.Error(),
+		}
+	}
+
+	return claims, nil
 }
