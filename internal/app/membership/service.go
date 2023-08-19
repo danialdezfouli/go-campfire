@@ -25,13 +25,13 @@ func (s MembershipService) AddMember(ctx context.Context, input AddMemberInput) 
 		return nil, exceptions.NewValidationError(err)
 	}
 
-	organization, err := s.OrganizationRepository.FindById(ctx, input.OrganizationId)
+	organization, err := s.OrganizationRepository.FindById(ctx, domain.OrganizationId(input.OrganizationId))
 	if err != nil {
-		return nil, exceptions.InternalServerError("failed to fetch organization", err)
+		return nil, exceptions.NewInternalServerError("failed to fetch organization", err)
 	}
 
 	if organization == nil {
-		return nil, exceptions.OrganizationNotFound(input.OrganizationId)
+		return nil, exceptions.NewOrganizationNotFound(input.OrganizationId)
 	}
 
 	password, _ := utils.HashPassword(input.Password)
@@ -44,7 +44,7 @@ func (s MembershipService) AddMember(ctx context.Context, input AddMemberInput) 
 	}
 
 	if err := s.UserRepository.CreateUser(ctx, user); err != nil {
-		return nil, exceptions.InternalServerError("failed to create user", err)
+		return nil, exceptions.NewInternalServerError("failed to create user", err)
 	}
 
 	return user, nil

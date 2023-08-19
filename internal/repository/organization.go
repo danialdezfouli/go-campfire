@@ -14,7 +14,7 @@ func NewOrganizationRepositoryPostgres() OrganizationRepositoryPostgres {
 	return OrganizationRepositoryPostgres{}
 }
 
-func (o OrganizationRepositoryPostgres) FindById(ctx context.Context, id int) (*domain.Organization, error) {
+func (o OrganizationRepositoryPostgres) FindById(ctx context.Context, id domain.OrganizationId) (*domain.Organization, error) {
 	db := database.GetPostgres()
 
 	rows, err := db.Query("SELECT id, name FROM organizations WHERE id = $1 limit 1", id)
@@ -52,7 +52,7 @@ func (o OrganizationRepositoryPostgres) CreateOrganization(ctx context.Context, 
 	return nil
 }
 
-func (o OrganizationRepositoryPostgres) DeleteOrganization(ctx context.Context, id int) error {
+func (o OrganizationRepositoryPostgres) DeleteOrganization(ctx context.Context, id domain.OrganizationId) error {
 	db := database.GetPostgres()
 	_, err := db.Exec(`DELETE from organizations where id=$1`, id)
 	if err != nil {

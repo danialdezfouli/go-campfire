@@ -1,17 +1,22 @@
-package utils
+package config
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/joho/godotenv"
 )
 
-// type Config struct {
-// 	Port int    `yaml:"port"`
-// 	Gin  string `yaml:"gin_mode"`
+// type ConfigShape struct {
+// 	AccessTokenSecret string
 // }
+// var Config ConfigShape
+
+func GetAccessTokenSecret() []byte {
+	return []byte(os.Getenv("AccessTokenSecret"))
+}
 
 func LoadEnv(name string) {
 	_, filename, _, _ := runtime.Caller(0)

@@ -17,7 +17,7 @@ func (h MembershipHandler) AddMember(c *gin.Context) {
 	user, err := h.MembershipService.AddMember(c, input)
 
 	if err != nil {
-		c.JSON(err.GetCode(), err)
+		c.AbortWithStatusJSON(err.GetCode(), err)
 		return
 	}
 

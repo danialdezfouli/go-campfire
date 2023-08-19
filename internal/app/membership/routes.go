@@ -11,5 +11,5 @@ func MembershipRoutes(router *gin.Engine) {
 	orgRepository := repository.NewOrganizationRepositoryPostgres()
 	c := MembershipHandler{MembershipService: NewMembershipService(orgRepository, userRepository)}
 
-	router.POST("/api/v1/organizations/members", c.AddMember)
+	router.POST("/api/v1/organizations/:id/members", c.AddMember)
 }

@@ -7,6 +7,7 @@ import (
 	"campfire/internal/app/organization"
 	"campfire/internal/database"
 	"campfire/internal/repository"
+	"campfire/pkg/config"
 	"campfire/pkg/utils"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ import (
 
 func TestCreateOrganization(t *testing.T) {
 	// database connection
-	utils.LoadEnv(".env")
+	config.LoadEnv(".env")
 	assert.NoError(t, database.CreatePostgresConnection())
 	defer database.ClosePostgresConnection()
 

@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"campfire/internal/app/user"
+	"campfire/internal/middleware"
 	"campfire/internal/repository"
 
 	"github.com/gin-gonic/gin"
@@ -8,7 +10,16 @@ import (
 
 func AuthRoutes(router *gin.Engine) {
 	userRepository := repository.NewUserRepositoryPostgres()
-	c := AuthHandler{AuthService: NewAuthService(userRepository)}
+	c := AuthHandler{
+		AuthService: NewAuthService(userRepository),
+		UserService: user.NewUserService(userRepository),
+	}
 
-	router.POST("/api/v1/auth/login", c.Login)
+	public := router.Group("/api/v1/auth")
+	private := router.Group("/api/v1/auth")
+
+	public.POST("login", c.Login)
+
+	private.Use(middleware.AuthMiddleware())
+	private.GET("me", c.Me)
 }

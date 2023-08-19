@@ -19,7 +19,7 @@ func (h OrganizationHandler) Create(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

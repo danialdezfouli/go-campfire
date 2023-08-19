@@ -9,11 +9,11 @@ import (
 	"campfire/internal/app/membership"
 	"campfire/internal/database"
 	"campfire/internal/repository"
-	"campfire/pkg/utils"
+	"campfire/pkg/config"
 )
 
 func TestAddMemberToOrganization(t *testing.T) {
-	utils.LoadEnv(".env")
+	config.LoadEnv(".env")
 	err := database.CreatePostgresConnection()
 	assert.NoError(t, err)
 	defer database.ClosePostgresConnection()

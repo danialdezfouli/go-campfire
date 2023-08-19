@@ -50,7 +50,7 @@ func (s OrganizationService) createOrganization(ctx context.Context, input Creat
 	return org, nil
 }
 
-func (s OrganizationService) createFirstUserAtOrganization(ctx context.Context, orgID int, input CreateOrganizationInput) (*domain.User, error) {
+func (s OrganizationService) createFirstUserAtOrganization(ctx context.Context, orgID domain.OrganizationId, input CreateOrganizationInput) (*domain.User, error) {
 	password, _ := utils.HashPassword(input.Password)
 	user := &domain.User{
 		OrganizationId: orgID,
@@ -67,6 +67,6 @@ func (s OrganizationService) createFirstUserAtOrganization(ctx context.Context, 
 	return user, nil
 }
 
-func (s OrganizationService) DeleteOrganization(ctx context.Context, id int) error {
+func (s OrganizationService) DeleteOrganization(ctx context.Context, id domain.OrganizationId) error {
 	return s.OrganizationRepository.DeleteOrganization(ctx, id)
 }

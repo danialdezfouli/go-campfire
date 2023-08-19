@@ -6,6 +6,7 @@ import (
 	"campfire/internal/database"
 	"campfire/internal/domain"
 	"campfire/internal/repository"
+	"campfire/pkg/config"
 	"campfire/pkg/token"
 	"campfire/pkg/utils"
 	"context"
@@ -19,7 +20,7 @@ import (
 )
 
 func setupTestEnvironment(t *testing.T) {
-	utils.LoadEnv(".env")
+	config.LoadEnv(".env")
 	assert.NoError(t, database.CreatePostgresConnection())
 }
 
@@ -50,7 +51,7 @@ func createTestOrganization(t *testing.T) (*domain.Organization, *domain.User) {
 	return org, user
 }
 
-func deleteTestOrganization(t *testing.T, id int) {
+func deleteTestOrganization(t *testing.T, id domain.OrganizationId) {
 	userRepository := repository.NewUserRepositoryPostgres()
 	orgnRepository := repository.NewOrganizationRepositoryPostgres()
 	orgService := organization.OrganizationService{
@@ -124,9 +125,8 @@ func TestCreateToken(t *testing.T) {
 
 	t.Run("Given token is valid", func(t *testing.T) {
 		claims := &token.Claims{
-			UserID:         1,
-			OrganizationId: 1,
-			Email:          "testing-token@gmail.com",
+			User:         1,
+			Organization: 1,
 			RegisteredClaims: jwt.RegisteredClaims{
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
@@ -139,15 +139,14 @@ func TestCreateToken(t *testing.T) {
 
 		fmt.Println(created)
 
-		err = token.Validate(created, signingKey)
+		_, err = token.Validate(created, signingKey)
 		assert.NoError(t, err, "expected no error when validating token")
 	})
 
 	t.Run("Token validation fails on expired dates", func(t *testing.T) {
 		claims := &token.Claims{
-			UserID:         1,
-			OrganizationId: 1,
-			Email:          "testing-token@gmail.com",
+			User:         1,
+			Organization: 1,
 			RegisteredClaims: jwt.RegisteredClaims{
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)),
@@ -155,15 +154,14 @@ func TestCreateToken(t *testing.T) {
 		}
 
 		created, _ := token.Generate(claims, signingKey)
-		err := token.Validate(created, signingKey)
+		_, err := token.Validate(created, signingKey)
 		assert.Error(t, err, "token validation doesn't work right")
 	})
 
 	t.Run("Token validation fails on wrong signing key", func(t *testing.T) {
 		claims := &token.Claims{
-			UserID:         1,
-			OrganizationId: 1,
-			Email:          "testing-token@gmail.com",
+			User:         1,
+			Organization: 1,
 			RegisteredClaims: jwt.RegisteredClaims{
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
@@ -171,7 +169,7 @@ func TestCreateToken(t *testing.T) {
 		}
 
 		created, _ := token.Generate(claims, []byte("xyz"))
-		err := token.Validate(created, signingKey)
+		_, err := token.Validate(created, signingKey)
 
 		assert.Error(t, err, "expected error when validating expired token")
 

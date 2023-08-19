@@ -28,13 +28,16 @@ func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.Use
 
 	user, err := s.UserRepository.GetUserByEmail(ctx, input.Email, input.Subdomain)
 	if err != nil {
-		log.Printf("Error getting user: %s", err)
-		return nil, exceptions.InvalidLogin()
+		log.Printf("Error getting user: %v", err)
+		return nil, exceptions.InvalidLogin
+	}
+
+	if user == nil {
+		return nil, exceptions.InvalidLogin
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
-		return nil, exceptions.InvalidLogin()
-
+		return nil, exceptions.InvalidLogin
 	}
 
 	return user, nil
@@ -42,9 +45,8 @@ func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.Use
 
 func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User, signingKey []byte) (string, exceptions.CustomError) {
 	claims := &token.Claims{
-		UserID:         user.Id,
-		OrganizationId: user.OrganizationId,
-		Email:          user.Email,
+		User:         user.Id,
+		Organization: user.OrganizationId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
@@ -54,17 +56,17 @@ func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User, s
 	str, err := token.Generate(claims, signingKey)
 
 	if err != nil {
-		return "", exceptions.InternalServerError("failed to create token", err)
+		return "", exceptions.NewInternalServerError("failed to create token", err)
 	}
 
 	return str, nil
 }
 
 func (s AuthService) VerifyToken(ctx context.Context, tokenString string, signingKey []byte) (bool, exceptions.CustomError) {
-	err := token.Validate(tokenString, signingKey)
+	_, err := token.Validate(tokenString, signingKey)
 	if err != nil {
 		log.Printf("invalid token: %v", err)
-		return false, exceptions.InvalidToken()
+		return false, exceptions.InvalidToken
 	}
 
 	return true, nil

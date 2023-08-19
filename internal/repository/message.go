@@ -4,7 +4,9 @@ import (
 	"campfire/internal/database"
 	"campfire/internal/domain"
 	"context"
-	"fmt"
+	"strconv"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MessageRepositoryMongo struct {
@@ -20,9 +22,17 @@ func (r MessageRepositoryMongo) CreateUser(ctx context.Context, user *domain.Use
 		return err
 	}
 
-	user.Id = fmt.Sprintf("%s", result.InsertedID)
+	insertedID := result.InsertedID.(primitive.ObjectID).Hex()
 
-	return err
+	userIdInt, err := strconv.Atoi(insertedID)
+	if err != nil {
+		return err
+	}
+
+	userId := domain.UserId(userIdInt)
+
+	user.Id = userId
+	return nil
 }
 
 func (r MessageRepositoryMongo) GetUser(ctx context.Context, userId int) (*domain.User, error) {

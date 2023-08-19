@@ -1,7 +1,7 @@
 package main
 
 import (
-	"campfire/pkg/utils"
+	"campfire/pkg/config"
 	"database/sql"
 	"os"
 
@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	utils.LoadEnv(".env")
+	config.LoadEnv(".env")
 
 	uri := os.Getenv("POSTGRES_URI")
 

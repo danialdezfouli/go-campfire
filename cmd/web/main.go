@@ -3,11 +3,11 @@ package main
 import (
 	app "campfire/internal"
 	"campfire/internal/database"
-	"campfire/pkg/utils"
+	"campfire/pkg/config"
 )
 
 func main() {
-	utils.LoadEnv(".env")
+	config.LoadEnv(".env")
 
 	database.CreateMongodbConnection()
 	database.CreatePostgresConnection()
