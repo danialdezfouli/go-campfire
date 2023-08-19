@@ -5,12 +5,11 @@ import (
 	"campfire/pkg/exceptions"
 	"campfire/pkg/token"
 	"campfire/pkg/utils"
+	"campfire/pkg/validations"
 	"context"
-	"errors"
 	"log"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -19,12 +18,11 @@ type AuthService struct {
 }
 
 func NewAuthService(userRepository domain.UserRepository) AuthService {
-	return AuthService{userRepository}
+	return AuthService{UserRepository: userRepository}
 }
 
 func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.User, exceptions.CustomError) {
-	validate := validator.New()
-	if err := validate.Struct(input); err != nil {
+	if err := validations.Validate(input); err != nil {
 		return nil, exceptions.NewValidationError(err)
 	}
 
@@ -42,9 +40,7 @@ func (s AuthService) Attempt(ctx context.Context, input LoginInput) (*domain.Use
 	return user, nil
 }
 
-var signingKey = []byte("123")
-
-func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User) (string, error) {
+func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User, signingKey []byte) (string, exceptions.CustomError) {
 	claims := &token.Claims{
 		UserID:         user.Id,
 		OrganizationId: user.OrganizationId,
@@ -55,24 +51,20 @@ func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User) (
 		},
 	}
 
-	t, err := token.Generate(claims, signingKey)
+	str, err := token.Generate(claims, signingKey)
 
 	if err != nil {
-		return "", err
+		return "", exceptions.InternalServerError("failed to create token", err)
 	}
 
-	return t, nil
+	return str, nil
 }
 
-func (s AuthService) VerifyToken(ctx context.Context, tokenStr string) (bool, error) {
-	valid, err := token.Validate(tokenStr, signingKey)
-
+func (s AuthService) VerifyToken(ctx context.Context, tokenString string, signingKey []byte) (bool, exceptions.CustomError) {
+	err := token.Validate(tokenString, signingKey)
 	if err != nil {
-		return false, err
-	}
-
-	if !valid {
-		return false, errors.New("token is not valid")
+		log.Printf("invalid token: %v", err)
+		return false, exceptions.InvalidToken()
 	}
 
 	return true, nil

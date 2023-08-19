@@ -12,6 +12,13 @@ func Unauthenticated() *RequestError {
 	}
 }
 
+func InvalidToken() *RequestError {
+	return &RequestError{
+		Code:    http.StatusUnauthorized,
+		Message: "invalid token",
+	}
+}
+
 func InvalidLogin() *RequestError {
 	return &RequestError{
 		Code:    http.StatusUnauthorized,
@@ -21,7 +28,14 @@ func InvalidLogin() *RequestError {
 
 func OrganizationNotFound(id int) *RequestError {
 	return &RequestError{
-		Code:    http.StatusUnauthorized,
+		Code:    http.StatusNotFound,
 		Message: fmt.Sprintf("organization %d is not found", id),
+	}
+}
+
+func InternalServerError(message string, err error) *RequestError {
+	return &RequestError{
+		Code:    http.StatusInternalServerError,
+		Message: fmt.Sprintf(message+" %v", err),
 	}
 }

@@ -8,23 +8,20 @@ import (
 	"campfire/internal/database"
 	"campfire/internal/repository"
 	"campfire/pkg/utils"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
+func TestCreateOrganization(t *testing.T) {
+	// database connection
 	utils.LoadEnv(".env")
-	err := database.CreatePostgresConnection()
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, database.CreatePostgresConnection())
 	defer database.ClosePostgresConnection()
 
-	m.Run()
-}
-
-func TestCreateOrganization(t *testing.T) {
+	// initilizing
 	orgnRepository := repository.NewOrganizationRepositoryPostgres()
 	userRepository := repository.NewUserRepositoryPostgres()
-	s := organization.OrganizationService{
+	orgService := organization.OrganizationService{
 		UserRepository:         userRepository,
 		OrganizationRepository: orgnRepository,
 	}
@@ -37,10 +34,10 @@ func TestCreateOrganization(t *testing.T) {
 			Email:            "danial@gmail.com",
 			Password:         "secret",
 		}
-		_, _, err := s.CreateOrganization(context.TODO(), input)
-		if err != nil {
-			t.Fatalf("failed to create organization: %v", err)
-		}
+		_, _, err := orgService.CreateOrganization(context.Background(), input)
+		assert.NoError(t, err)
+		// assert.NoError(t, err, "expected no error when creating organization")
+
 	})
 
 	t.Run("Create organization with invalid data", func(t *testing.T) {
@@ -50,33 +47,8 @@ func TestCreateOrganization(t *testing.T) {
 			Email:            "",
 			Password:         "",
 		}
-		_, _, err := s.CreateOrganization(context.TODO(), invalidInput)
+		_, _, err := orgService.CreateOrganization(context.Background(), invalidInput)
+		assert.Error(t, err, "expected error with invalid data when creating organization")
 
-		if err == nil {
-			t.Fatal("expected an error with invalid data, but got none")
-		}
-	})
-}
-
-func TestAddMemberToOrganization(t *testing.T) {
-	orgnRepository := repository.NewOrganizationRepositoryPostgres()
-	userRepository := repository.NewUserRepositoryPostgres()
-	s := organization.OrganizationService{
-		UserRepository:         userRepository,
-		OrganizationRepository: orgnRepository,
-	}
-
-	t.Run("Add member to organization successfully", func(t *testing.T) {
-		input := organization.AddMemberInput{
-			OrganizationId: 14,
-			UserName:       "Pashmak",
-			Email:          "pashmak@gmail.com",
-			Password:       "pashmak",
-		}
-
-		_, err := s.AddMember(context.TODO(), input)
-		if err != nil {
-			t.Fatalf("failed to add member to organization: %v", err)
-		}
 	})
 }

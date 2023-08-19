@@ -3,6 +3,7 @@ package tests
 import (
 	"campfire/internal/app/auth"
 	"campfire/internal/app/organization"
+	"campfire/internal/database"
 	"campfire/internal/domain"
 	"campfire/internal/repository"
 	"campfire/pkg/token"
@@ -14,9 +15,19 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/stretchr/testify/assert"
 )
 
-func createOrganization(t *testing.T) (*domain.Organization, *domain.User) {
+func setupTestEnvironment(t *testing.T) {
+	utils.LoadEnv(".env")
+	assert.NoError(t, database.CreatePostgresConnection())
+}
+
+func tearDownTestEnvironment() {
+	database.ClosePostgresConnection()
+}
+
+func createTestOrganization(t *testing.T) (*domain.Organization, *domain.User) {
 	orgnRepository := repository.NewOrganizationRepositoryPostgres()
 	userRepository := repository.NewUserRepositoryPostgres()
 	orgService := organization.OrganizationService{
@@ -24,7 +35,7 @@ func createOrganization(t *testing.T) (*domain.Organization, *domain.User) {
 		OrganizationRepository: orgnRepository,
 	}
 
-	org, user, err := orgService.CreateOrganization(context.TODO(), organization.CreateOrganizationInput{
+	org, user, err := orgService.CreateOrganization(context.Background(), organization.CreateOrganizationInput{
 		UserName:         "testing-auth",
 		OrganizationName: "testing-auth",
 		Subdomain:        utils.GenerateRandomSubdomain(),
@@ -39,79 +50,79 @@ func createOrganization(t *testing.T) (*domain.Organization, *domain.User) {
 	return org, user
 }
 
-func deleteOrganization(id int) {
+func deleteTestOrganization(t *testing.T, id int) {
 	userRepository := repository.NewUserRepositoryPostgres()
 	orgnRepository := repository.NewOrganizationRepositoryPostgres()
 	orgService := organization.OrganizationService{
 		UserRepository:         userRepository,
 		OrganizationRepository: orgnRepository,
 	}
-	defer orgService.DeleteOrganization(context.TODO(), id)
+
+	err := orgService.DeleteOrganization(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestUserLogin(t *testing.T) {
+	setupTestEnvironment(t)
+	defer tearDownTestEnvironment()
+
 	userRepository := repository.NewUserRepositoryPostgres()
 	authService := auth.AuthService{
 		UserRepository: userRepository,
 	}
 
 	t.Run("User can login successfully", func(t *testing.T) {
-		org, createdUser := createOrganization(t)
-		defer deleteOrganization(org.Id)
+		org, createdUser := createTestOrganization(t)
+		defer deleteTestOrganization(t, org.Id)
 
-		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
+		_, err := authService.Attempt(context.Background(), auth.LoginInput{
 			Subdomain: org.Subdomain,
 			Email:     createdUser.Email,
 			Password:  "secret",
 		})
 
-		if err != nil {
-			t.Fatal("failed to login", err)
-		}
-
+		assert.NoError(t, err, "expected no error when logging in")
 	})
 
 	t.Run("User does not login with invalid email", func(t *testing.T) {
-		org, _ := createOrganization(t)
-		defer deleteOrganization(org.Id)
+		org, _ := createTestOrganization(t)
+		defer deleteTestOrganization(t, org.Id)
 
-		_, err := authService.Attempt(context.TODO(), auth.LoginInput{
+		_, err := authService.Attempt(context.Background(), auth.LoginInput{
 			Subdomain: org.Subdomain,
 			Email:     "different-email@gmail.com",
 			Password:  "secret",
 		})
 
-		if err == nil {
-			t.Fatal("it should not login")
-		}
+		assert.Error(t, err, "expected error when logging in with invalid email")
 	})
 
 }
 
 func TestCreateToken(t *testing.T) {
+	setupTestEnvironment(t)
+	defer tearDownTestEnvironment()
+
 	signingKey := []byte("123")
 	userRepository := repository.NewUserRepositoryPostgres()
 	authService := auth.AuthService{
 		UserRepository: userRepository,
 	}
 
-	t.Run("user get a new token", func(t *testing.T) {
-		org, user := createOrganization(t)
-		defer deleteOrganization(org.Id)
+	t.Run("User get a new token", func(t *testing.T) {
+		org, user := createTestOrganization(t)
+		defer deleteTestOrganization(t, org.Id)
 
-		token, err := authService.CreateAccessToken(context.TODO(), user)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if token == "" {
-			t.Fatal("token is empty")
-		}
+		token, err := authService.CreateAccessToken(context.Background(), user, signingKey)
+		assert.NoError(t, err, "expected no error when creating token")
+		assert.NotEmpty(t, token, "expected token to be non-empty")
 
 		log.Printf("generated token: %v", token)
 	})
 
-	t.Run("given token is valid", func(t *testing.T) {
+	t.Run("Given token is valid", func(t *testing.T) {
 		claims := &token.Claims{
 			UserID:         1,
 			OrganizationId: 1,
@@ -123,29 +134,16 @@ func TestCreateToken(t *testing.T) {
 		}
 
 		created, err := token.Generate(claims, signingKey)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if created == "" {
-			t.Fatal("token is empty")
-		}
+		assert.NoError(t, err, "expected no error when generating token")
+		assert.NotEmpty(t, created, "expected created token to be non-empty")
 
 		fmt.Println(created)
 
-		verified, err := token.Validate(created, signingKey)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if !verified {
-			t.Fatal("token is not verified")
-		}
-
+		err = token.Validate(created, signingKey)
+		assert.NoError(t, err, "expected no error when validating token")
 	})
 
-	t.Run("token validation failes on expired dates", func(t *testing.T) {
+	t.Run("Token validation fails on expired dates", func(t *testing.T) {
 		claims := &token.Claims{
 			UserID:         1,
 			OrganizationId: 1,
@@ -157,14 +155,11 @@ func TestCreateToken(t *testing.T) {
 		}
 
 		created, _ := token.Generate(claims, signingKey)
-		_, err := token.Validate(created, signingKey)
-
-		if err == nil {
-			t.Fatal("token validation doesn't work right")
-		}
+		err := token.Validate(created, signingKey)
+		assert.Error(t, err, "token validation doesn't work right")
 	})
 
-	t.Run("token validation failes on wrong signing key", func(t *testing.T) {
+	t.Run("Token validation fails on wrong signing key", func(t *testing.T) {
 		claims := &token.Claims{
 			UserID:         1,
 			OrganizationId: 1,
@@ -176,10 +171,9 @@ func TestCreateToken(t *testing.T) {
 		}
 
 		created, _ := token.Generate(claims, []byte("xyz"))
-		valid, _ := token.Validate(created, signingKey)
+		err := token.Validate(created, signingKey)
 
-		if valid {
-			t.Fatal("token validation should not pass wrong signingkey")
-		}
+		assert.Error(t, err, "expected error when validating expired token")
+
 	})
 }

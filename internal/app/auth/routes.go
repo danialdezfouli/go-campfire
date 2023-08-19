@@ -7,8 +7,8 @@ import (
 )
 
 func AuthRoutes(router *gin.Engine) {
-	userRepositoryDb := repository.NewUserRepositoryPostgres()
-	c := AuthHandler{AuthService: NewAuthService(userRepositoryDb)}
+	userRepository := repository.NewUserRepositoryPostgres()
+	c := AuthHandler{AuthService: NewAuthService(userRepository)}
 
-	router.POST("/api/v1/login", c.Login)
+	router.POST("/api/v1/auth/login", c.Login)
 }
