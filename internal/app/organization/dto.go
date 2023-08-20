@@ -7,6 +7,3 @@ type CreateOrganizationInput struct {
 	Email            string `validate:"required"`
 	Password         string `validate:"required"`
 }
-
-type CreateOrganizationResponse struct {
-}

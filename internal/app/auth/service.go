@@ -8,6 +8,7 @@ import (
 	"campfire/pkg/utils"
 	"campfire/pkg/validations"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -66,16 +67,6 @@ func (s AuthService) CreateAccessToken(ctx context.Context, user *domain.User, s
 	return str, nil
 }
 
-func (s AuthService) VerifyToken(ctx context.Context, tokenString string, signingKey []byte) (bool, exceptions.CustomError) {
-	_, err := token.Validate(tokenString, signingKey)
-	if err != nil {
-		log.Printf("invalid token: %v", err)
-		return false, exceptions.InvalidToken
-	}
-
-	return true, nil
-}
-
 func (s AuthService) ParseToken(ctx *gin.Context) (*token.Claims, exceptions.CustomError) {
 	accessToken := ctx.GetHeader("Authorization")
 	claims, err := token.Parse(accessToken, config.GetAccessTokenSecret())
@@ -87,4 +78,19 @@ func (s AuthService) ParseToken(ctx *gin.Context) (*token.Claims, exceptions.Cus
 	}
 
 	return claims, nil
+}
+
+func (s AuthService) FindUserById(ctx context.Context, id domain.UserId) (*domain.User, exceptions.CustomError) {
+	user, err := s.UserRepository.GetUserById(ctx, id)
+
+	if err != nil {
+		log.Printf("failed to find user by id, %v", err)
+		return nil, &exceptions.RequestError{
+			Code:    http.StatusForbidden,
+			Message: fmt.Sprintf("user %d is not found", id),
+		}
+	}
+
+	return user, nil
+
 }

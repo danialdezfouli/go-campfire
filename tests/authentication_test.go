@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// should be in another file
 func setupTestEnvironment(t *testing.T) {
 	config.LoadEnv(".env")
 	assert.NoError(t, database.CreatePostgresConnection())

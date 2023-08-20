@@ -13,7 +13,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		signingKey := config.GetAccessTokenSecret()
 
 		rawToken := c.GetHeader("Authorization")
-		_, err := token.Parse(rawToken, signingKey)
+		claims, err := token.Parse(rawToken, signingKey)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": err.Error(),
@@ -21,6 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		c.Set("user", claims)
 		c.Next()
 	}
 }

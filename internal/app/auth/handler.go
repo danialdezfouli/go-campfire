@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"campfire/internal/app/user"
 	"campfire/pkg/config"
+	"campfire/pkg/exceptions"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +10,6 @@ import (
 
 type AuthHandler struct {
 	AuthService AuthService
-	UserService user.UserService
 }
 
 func (h AuthHandler) Login(c *gin.Context) {
@@ -19,14 +18,14 @@ func (h AuthHandler) Login(c *gin.Context) {
 	user, err := h.AuthService.Attempt(c, input)
 
 	if err != nil {
-		c.JSON(err.GetCode(), err)
+		exceptions.AbortWithError(c, err)
 		return
 	}
 
 	secret := []byte(config.GetAccessTokenSecret())
 	accessToken, err := h.AuthService.CreateAccessToken(c, user, secret)
 	if err != nil {
-		c.AbortWithStatusJSON(err.GetCode(), err)
+		exceptions.AbortWithError(c, err)
 		return
 	}
 
@@ -42,20 +41,19 @@ func (h AuthHandler) Login(c *gin.Context) {
 }
 
 func (h AuthHandler) Me(c *gin.Context) {
-	claims, err := h.AuthService.ParseToken(c)
+	claims, err := GetUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(err.GetCode(), err)
+		exceptions.AbortWithError(c, err)
 		return
 	}
 
-	user, err := h.UserService.FindById(c, claims.User)
+	user, err := h.AuthService.FindUserById(c, claims.User)
 	if err != nil {
-		c.AbortWithStatusJSON(err.GetCode(), err)
+		exceptions.AbortWithError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"claims": claims,
-		"user":   user,
+		"data": user,
 	})
 }

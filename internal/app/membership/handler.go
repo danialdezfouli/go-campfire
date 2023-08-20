@@ -1,6 +1,7 @@
 package membership
 
 import (
+	"campfire/pkg/exceptions"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func (h MembershipHandler) AddMember(c *gin.Context) {
 	user, err := h.MembershipService.AddMember(c, input)
 
 	if err != nil {
-		c.AbortWithStatusJSON(err.GetCode(), err)
+		exceptions.AbortWithError(c, err)
 		return
 	}
 
